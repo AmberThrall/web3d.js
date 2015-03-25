@@ -6,7 +6,7 @@ var web3d = {
 	gl: null,
 	canvas: null,
 	init: null,
-	update: null,
+	render: null,
 
 	version: function() {
 		return this.VERSION_MAJOR + "." + this.VERSION_MINOR + "." + this.VERSION_PATCH;
@@ -17,10 +17,10 @@ var web3d = {
 		this.glCheck("Failed to set clear color.");
 	},
 
-	initialize: function(canvas, init, update) {
+	initialize: function(canvas, init, render) {
 		this.canvas = canvas;
 		this.init = init;
-		this.update = update;
+		this.render = render;
 
 		this.log("Obtaining WebGL context.");
 		try {
@@ -33,7 +33,6 @@ var web3d = {
 		
 		this.log("OpenGL Renderer: ", this.gl.getParameter(this.gl.RENDERER));
 		this.log("OpenGL Version: ", this.gl.getParameter(this.gl.VERSION));
-		this.log("Checking for multisampling support.");
 
 		this.log("Initializing the game.");
 		this.clearColor(new web3d.Color(0,0,0,1));
@@ -48,7 +47,7 @@ var web3d = {
 	mainLoop: function() {
 		web3d.gl.viewport(0, 0, web3d.canvas.width, web3d.canvas.height);
 		web3d.gl.clear(web3d.gl.COLOR_BUFFER_BIT | web3d.gl.DEPTH_BUFFER_BIT);
-		web3d.update();
+		web3d.render();
 
 		requestAnimationFrame(web3d.mainLoop);
 	},

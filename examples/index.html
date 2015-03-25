@@ -91,7 +91,7 @@
 			}
 
 			var t = 0, r = 0;
-			function update() {
+			function render() {
 				var s = Math.sin(t+=0.01)*0.25 + 1;
 				cube.scale = [s,s,s];
 				cube.rotation = [90,0,r+=0.1];
@@ -107,7 +107,7 @@
 			canvas = document.getElementById("canvas");
 			canvas.width = window.innerWidth;
 			canvas.height = window.innerHeight;
-			web3d.initialize(canvas, init, update);
+			web3d.initialize(canvas, init, render);
 		</script>
 	</body>
 </html>
