@@ -1,7 +1,8 @@
 web3d.RenderTypes = {
 	TRIANGLES: 0,
 	TRIANGLE_STRIP: 1,
-	TRIANGLE_FAN: 2
+	TRIANGLE_FAN: 2,
+	QUADS: 3
 };
 
 web3d.Geometry = function () {
@@ -115,6 +116,9 @@ web3d.Geometry.prototype = {
 				break;
 			case web3d.RenderTypes.TRIANGLE_FAN:
 				type = web3d.gl.TRIANGLE_FAN;
+				break;
+			case web3d.RenderTypes.QUADS:
+				type = web3d.gl.QUADS;
 				break;
 			default:
 				type = web3d.gl.TRIANGLES;

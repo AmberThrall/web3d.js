@@ -40,11 +40,13 @@
 
 			var t = 0;
 			function render() {
+				//update the canvas size.
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+				
 				cube.rotation = [90,0,t+=0.1];
 
 				cube.render(camera);
-				canvas.width = window.innerWidth;
-				canvas.height = window.innerHeight;
 			}
 		</script>
 	</head>

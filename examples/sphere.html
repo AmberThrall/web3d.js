@@ -9,7 +9,7 @@
 		<script type="text/javascript" src="../build/web3d.js"></script>
 		<script type="text/javascript">
 			var canvas;
-			var teapot;
+			var sphere;
 			var program;
 			var camera;
 
@@ -17,35 +17,23 @@
 				web3d.log("web3d.js Version: ", web3d.version());
 				web3d.clearColor(new web3d.Color(0x000000ff))
 
+				sphere = web3d.Geometry.sphere(1, 12, 24);
+
 				camera = new web3d.Camera();
-				camera.lookAt([20,20,20], [0,0,0], [0,1,0]);
+				camera.lookAt([1.5,1.5,1.5], [0,0,0], [0,1,0]);
 				camera.perspective(45, canvas.width / canvas.height, 0.1, 100);
 
-				loader = new web3d.ModelLoader();
-				loader.load("models/teapot.json",
-					function(geo) {
-						web3d.log("Loaded model 'models/teapot.json'");
-						teapot = geo;
-						
-						// Now load in the texture.
-						var loader = new web3d.TextureLoader();
-						loader.load("textures/metal.jpg",
-							function(texture) {
-								teapot.material = new web3d.TexturedMaterial(texture);
-							},
-							function(bytes,total) {
-								web3d.log((bytes / total * 100) + "% loaded");
-							},
-							function(bytes,total) {
-								web3d.log("Failed to load texture.");
-							}
-						);
+				var loader = new web3d.TextureLoader();
+				loader.load("textures/metal.jpg",
+					function(texture) {
+						web3d.log("Loaded texture 'textures/metal.jpg'");
+						sphere.material = new web3d.TexturedMaterial(texture);
 					},
 					function(bytes,total) {
 						web3d.log((bytes / total * 100) + "% loaded");
 					},
 					function(bytes,total) {
-						web3d.log("Failed to load model.");
+						web3d.log("Failed to load texture.");
 					}
 				);
 			}
@@ -55,11 +43,10 @@
 				//update the canvas size.
 				canvas.width = window.innerWidth;
 				canvas.height = window.innerHeight;
+				
+				sphere.rotation = [90,0,t+=0.1];
 
-				if (teapot != null) {
-					teapot.rotation = [90,0,t+=0.1];
-					teapot.render(camera);
-				}
+				sphere.render(camera);
 			}
 		</script>
 	</head>
@@ -68,6 +55,8 @@
 
 		<script type="text/javascript">
 			canvas = document.getElementById("canvas");
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
 			web3d.initialize(canvas, init, render);
 		</script>
 	</body>

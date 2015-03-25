@@ -12,6 +12,7 @@ var files = [
 	"src/graphics/texture.js",
 	"src/scene/camera.js",
 	"src/scene/cube.js",
+	"src/scene/sphere.js",
 	"src/scene/basicMaterial.js",
 	"src/scene/texturedMaterial.js"
 ];
