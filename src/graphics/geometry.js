@@ -7,6 +7,7 @@ web3d.RenderTypes = {
 web3d.Geometry = function () {
 	this.verticesBuffer = web3d.gl.createBuffer();
 	this.colorsBuffer = web3d.gl.createBuffer();
+	this.uvBuffer = web3d.gl.createBuffer();
 
 	this.material = new web3d.BasicMaterial(new web3d.Color(1,1,1,1));
 	this.position = [0,0,0];
@@ -36,6 +37,10 @@ web3d.Geometry.prototype = {
 		if (this.colors.length > 0) {
 			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.colorsBuffer);
 			web3d.gl.bufferData(web3d.gl.ARRAY_BUFFER, new Float32Array(this.colors), web3d.gl.STATIC_DRAW);
+		}
+		if (this.uvs.length > 0) {
+			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.uvBuffer);
+			web3d.gl.bufferData(web3d.gl.ARRAY_BUFFER, new Float32Array(this.uvs), web3d.gl.STATIC_DRAW);
 		}
 
 		this.renderType = renderType;
@@ -70,6 +75,13 @@ web3d.Geometry.prototype = {
 			web3d.gl.vertexAttribPointer(color0, 4, web3d.gl.FLOAT, false, 0, 0);
 			web3d.gl.enableVertexAttribArray(color0);
 			web3d.glCheck("Failed to set geometry's color attribute.");
+		}
+		var uv0 = program.locations[web3d.ProgramLocations.TEXCOORD0];
+		if (this.uvs.length > 0 && uv0 != null) {
+			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.uvBuffer);
+			web3d.gl.vertexAttribPointer(uv0, 2, web3d.gl.FLOAT, false, 0, 0);
+			web3d.gl.enableVertexAttribArray(uv0);
+			web3d.glCheck("Failed to set geometry's texcoord attribute.");
 		}
 
 		// Lookup rendertype:

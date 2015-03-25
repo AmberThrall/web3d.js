@@ -120,6 +120,63 @@ web3d.Math = {
 		return x * (180 / Math.PI);
 	},
 };
+web3d.Loader = function () {
+	
+};
+
+web3d.Loader.prototype = {
+	constructor: web3d.Loader,
+
+	load: function(url, complete, progress, error) {
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', url, true);
+		xhr.responseType = "arraybuffer";
+		xhr.ontimeout = function() {
+			error(xhr.loaded,xhr.total);
+		};
+		xhr.onprogress = function() {
+			progress(xhr.loaded, xhr.total);
+		};
+		xhr.onload = function() {
+			if (this.status == 200)
+				complete(this.response);
+			else
+				error(xhr.loaded, xhr.total);
+		};
+		xhr.send(null);
+	}
+};
+
+web3d.TextureLoader = function() {
+	this.loader = new web3d.Loader();
+};
+
+web3d.TextureLoader.prototype = {
+	constructor: web3d.TextureLoader,
+	loader: null,
+
+	load: function(url, complete, progress, error) {
+		this.loader.load(url, function(data) { 
+			var image = new Image();
+			image.onload = function() {
+				var texture = new web3d.Texture(image);
+				complete(texture);
+			};
+			image.onprogress = function() {
+				progress(image.loaded, image.total);
+			};
+			image.src = url;
+		},
+		function(recv,total) {
+			progress(recv,total);
+		},
+		function(xhr){
+			error(recv,total);
+		})
+
+
+	}
+}
 web3d.Color = function (color) {
 	if (arguments.length == 3)
 		this.setRGBA(arguments[0], arguments[1], arguments[2], 1);
@@ -332,6 +389,26 @@ web3d.Program.prototype = {
 		web3d.glCheck("glUniformMatrix4fv failed.");
 	}
 }
+web3d.Material = function () {
+
+};
+
+web3d.Material.prototype = {
+	constructor: web3d.Material,
+	program: null,
+
+	setProgram: function(program) {
+		this.program = program;
+	},
+
+	bind: function() {
+		this.program.bind();
+	},
+
+	unbind: function() {
+		this.program.unbind();
+	}
+};
 web3d.RenderTypes = {
 	TRIANGLES: 0,
 	TRIANGLE_STRIP: 1,
@@ -341,6 +418,7 @@ web3d.RenderTypes = {
 web3d.Geometry = function () {
 	this.verticesBuffer = web3d.gl.createBuffer();
 	this.colorsBuffer = web3d.gl.createBuffer();
+	this.uvBuffer = web3d.gl.createBuffer();
 
 	this.material = new web3d.BasicMaterial(new web3d.Color(1,1,1,1));
 	this.position = [0,0,0];
@@ -370,6 +448,10 @@ web3d.Geometry.prototype = {
 		if (this.colors.length > 0) {
 			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.colorsBuffer);
 			web3d.gl.bufferData(web3d.gl.ARRAY_BUFFER, new Float32Array(this.colors), web3d.gl.STATIC_DRAW);
+		}
+		if (this.uvs.length > 0) {
+			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.uvBuffer);
+			web3d.gl.bufferData(web3d.gl.ARRAY_BUFFER, new Float32Array(this.uvs), web3d.gl.STATIC_DRAW);
 		}
 
 		this.renderType = renderType;
@@ -405,6 +487,13 @@ web3d.Geometry.prototype = {
 			web3d.gl.enableVertexAttribArray(color0);
 			web3d.glCheck("Failed to set geometry's color attribute.");
 		}
+		var uv0 = program.locations[web3d.ProgramLocations.TEXCOORD0];
+		if (this.uvs.length > 0 && uv0 != null) {
+			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.uvBuffer);
+			web3d.gl.vertexAttribPointer(uv0, 2, web3d.gl.FLOAT, false, 0, 0);
+			web3d.gl.enableVertexAttribArray(uv0);
+			web3d.glCheck("Failed to set geometry's texcoord attribute.");
+		}
 
 		// Lookup rendertype:
 		//TODO: Remaining
@@ -436,6 +525,36 @@ web3d.Geometry.prototype = {
 		// Unbind the program and buffers, we're done with them.
 		web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, null);
 		this.material.unbind();
+	}
+};
+web3d.Texture = function (image) {
+	this.texture = web3d.gl.createTexture();
+	this.set(image);
+};
+
+web3d.Texture.prototype = {
+	constructor: web3d.Texture,
+
+	texture: null,
+
+	set: function(image) {
+		this.bind();
+		web3d.gl.texImage2D(web3d.gl.TEXTURE_2D, 0, web3d.gl.RGBA, web3d.gl.RGBA, web3d.gl.UNSIGNED_BYTE, image);
+		web3d.gl.texParameteri(web3d.gl.TEXTURE_2D, web3d.gl.TEXTURE_MAG_FILTER, web3d.gl.LINEAR);
+		web3d.gl.texParameteri(web3d.gl.TEXTURE_2D, web3d.gl.TEXTURE_MIN_FILTER, web3d.gl.LINEAR_MIPMAP_NEAREST);
+		web3d.gl.generateMipmap(web3d.gl.TEXTURE_2D);
+		this.unbind();
+		return this;
+	},
+
+	bind: function() {
+		web3d.gl.bindTexture(web3d.gl.TEXTURE_2D, this.texture);
+		web3d.glCheck("Failed to bind texture.");
+	},
+
+	unbind: function() {
+		web3d.gl.bindTexture(web3d.gl.TEXTURE_2D, null);
+		web3d.glCheck("Failed to unbind texture.");
 	}
 };
 web3d.Camera = function () {
@@ -538,29 +657,53 @@ web3d.Geometry.cube = function(x, y, z) {
     geo.colors.length = (geo.vertices.length/3)*4
 	for (var i = 0; i < geo.colors.length; ++i)
 		geo.colors[i] = 1;
+
+	geo.uvs = [
+		0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		1.0, 1.0,
+		0.0, 1.0,
+		0.0, 0.0,
+
+		0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		1.0, 1.0,
+		0.0, 1.0,
+		0.0, 0.0,
+
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0,
+		0.0, 1.0,
+		0.0, 0.0,
+		1.0, 0.0,
+
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0,
+		0.0, 1.0,
+		0.0, 0.0,
+		1.0, 0.0,
+
+		0.0, 1.0,
+		1.0, 1.0,
+		1.0, 0.0,
+		1.0, 0.0,
+		0.0, 0.0,
+		0.0, 1.0,
+
+		0.0, 1.0,
+		1.0, 1.0,
+		1.0, 0.0,
+		1.0, 0.0,
+		0.0, 0.0,
+		0.0, 1.0
+	];
 	geo.update(web3d.RenderTypes.TRIANGLES);
 	return geo;
 }
-web3d.Material = function () {
-
-};
-
-web3d.Material.prototype = {
-	constructor: web3d.Material,
-	program: null,
-
-	setProgram: function(program) {
-		this.program = program;
-	},
-
-	bind: function() {
-		this.program.bind();
-	},
-
-	unbind: function() {
-		this.program.unbind();
-	}
-};
 web3d.BasicMaterial = function (color) {
 	web3d.Material.call(this);
 
@@ -603,4 +746,60 @@ web3d.BasicMaterial.prototype.bind = function() {
 	this.program.bind();
 	
 	this.program.uniformColor(this.program.locations[web3d.ProgramLocations.CUSTOM0], this.color);
+}
+web3d.TexturedMaterial = function (texture) {
+	web3d.Material.call(this);
+
+	var vertexShader = new web3d.Shader(0, "	\
+			attribute vec3 aVertexPosition;		\
+			attribute vec4 aVertexColor;		\
+			attribute vec2 aTextureCoord;		\
+			uniform mat4 uPMatrix;				\
+			uniform mat4 uVMatrix;				\
+			uniform mat4 uMMatrix;				\
+			uniform vec4 uColor;				\
+			varying vec2 vTextureCoord;			\
+			varying vec4 vColor;				\
+			void main(void) {					\
+				vColor = aVertexColor;			\
+				vTextureCoord = aTextureCoord;	\
+				gl_Position = uPMatrix * uVMatrix * uMMatrix * vec4(aVertexPosition, 1.0);	\
+			}"
+		);
+	var fragmentShader = new web3d.Shader(1, "			\
+		 	precision mediump float;					\
+		 	uniform sampler2D uSampler;					\
+		 	varying vec2 vTextureCoord;					\
+		 	varying vec4 vColor;						\
+			void main(void) {							\
+				gl_FragColor = vColor * texture2D(uSampler, vTextureCoord);		\
+			}"
+		);
+
+	program = new web3d.Program(vertexShader, fragmentShader);
+	program.mapAttribute(web3d.ProgramLocations.POSITION0, "aVertexPosition");
+	program.mapAttribute(web3d.ProgramLocations.COLOR0, "aVertexColor");
+	program.mapAttribute(web3d.ProgramLocations.TEXCOORD0, "aTextureCoord");
+	program.mapUniform(web3d.ProgramLocations.TEXTURE0, "vTextureCoord")
+	program.mapUniform(web3d.ProgramLocations.PERSPECTIVE_MATRIX, "uPMatrix");
+	program.mapUniform(web3d.ProgramLocations.VIEW_MATRIX, "uVMatrix");
+	program.mapUniform(web3d.ProgramLocations.MODEL_MATRIX, "uMMatrix");
+
+	this.setProgram(program);
+	this.texture = texture;
+};
+
+web3d.TexturedMaterial.prototype = Object.create(web3d.Material.prototype);
+web3d.TexturedMaterial.prototype.constructor = web3d.TexturedMaterial;
+web3d.TexturedMaterial.prototype.bind = function() {
+	this.program.bind();
+	
+	web3d.gl.activeTexture(web3d.gl.TEXTURE0);
+	this.texture.bind();
+	this.program.uniform1(this.program.locations[web3d.ProgramLocations.TEXTURE0], 0);
+}
+
+web3d.TexturedMaterial.prototype.unbind = function() {
+	this.program.unbind();
+	this.texture.unbind();
 }
