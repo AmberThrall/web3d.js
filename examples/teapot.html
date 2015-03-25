@@ -21,12 +21,23 @@
 				camera.lookAt([20,20,20], [0,0,0], [0,1,0]);
 				camera.perspective(45, canvas.width / canvas.height, 0.1, 100);
 
-				var loader = new web3d.ModelLoader();
+				loader = new web3d.ModelLoader();
 				loader.load("models/teapot.json",
 					function(geo) {
 						web3d.log("Loaded model 'models/teapot.json'");
 						teapot = geo;
-						teapot.material.color = new web3d.Color(1,1,1,1);
+						var loader = new web3d.TextureLoader();
+						loader.load("textures/metal.jpg",
+							function(texture) {
+								teapot.material = new web3d.TexturedMaterial(texture);
+							},
+							function(bytes,total) {
+								web3d.log((bytes / total * 100) + "% loaded");
+							},
+							function(bytes,total) {
+								web3d.log("Failed to load texture.");
+							}
+						);
 					},
 					function(bytes,total) {
 						web3d.log((bytes / total * 100) + "% loaded");
@@ -39,6 +50,10 @@
 
 			var t = 0;
 			function render() {
+				//update the canvas size.
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+
 				if (teapot != null) {
 					teapot.rotation = [90,0,t+=0.1];
 					teapot.render(camera);
@@ -51,8 +66,6 @@
 
 		<script type="text/javascript">
 			canvas = document.getElementById("canvas");
-			canvas.width = window.innerWidth;
-			canvas.height = window.innerHeight;
 			web3d.initialize(canvas, init, render);
 		</script>
 	</body>

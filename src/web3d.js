@@ -44,7 +44,7 @@ var web3d = {
 	},
 
 	mainLoop: function() {
-		web3d.gl.viewport(0, 0, web3d.canvas.width, web3d.canvas.height);
+		web3d.gl.viewport(0, 0, web3d.canvas.width, web3d.gl.canvas.height);
 		web3d.gl.clear(web3d.gl.COLOR_BUFFER_BIT | web3d.gl.DEPTH_BUFFER_BIT);
 		web3d.render();
 

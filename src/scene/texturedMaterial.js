@@ -3,16 +3,13 @@ web3d.TexturedMaterial = function (texture) {
 
 	var vertexShader = new web3d.Shader(0, "	\
 			attribute vec3 aVertexPosition;		\
-			attribute vec4 aVertexColor;		\
 			attribute vec2 aTextureCoord;		\
 			uniform mat4 uPMatrix;				\
 			uniform mat4 uVMatrix;				\
 			uniform mat4 uMMatrix;				\
 			uniform vec4 uColor;				\
 			varying vec2 vTextureCoord;			\
-			varying vec4 vColor;				\
 			void main(void) {					\
-				vColor = aVertexColor;			\
 				vTextureCoord = aTextureCoord;	\
 				gl_Position = uPMatrix * uVMatrix * uMMatrix * vec4(aVertexPosition, 1.0);	\
 			}"
@@ -21,15 +18,13 @@ web3d.TexturedMaterial = function (texture) {
 		 	precision mediump float;					\
 		 	uniform sampler2D uSampler;					\
 		 	varying vec2 vTextureCoord;					\
-		 	varying vec4 vColor;						\
 			void main(void) {							\
-				gl_FragColor = vColor * texture2D(uSampler, vTextureCoord);		\
+				gl_FragColor = texture2D(uSampler, vTextureCoord);		\
 			}"
 		);
 
 	program = new web3d.Program(vertexShader, fragmentShader);
 	program.mapAttribute(web3d.ProgramLocations.POSITION0, "aVertexPosition");
-	program.mapAttribute(web3d.ProgramLocations.COLOR0, "aVertexColor");
 	program.mapAttribute(web3d.ProgramLocations.TEXCOORD0, "aTextureCoord");
 	program.mapUniform(web3d.ProgramLocations.TEXTURE0, "vTextureCoord")
 	program.mapUniform(web3d.ProgramLocations.PERSPECTIVE_MATRIX, "uPMatrix");
