@@ -131,11 +131,11 @@ web3d.Loader.prototype = {
 		var xhr = new XMLHttpRequest();
 		xhr.open('GET', url, true);
 		xhr.responseType = "arraybuffer";
-		xhr.ontimeout = function() {
-			error(xhr.loaded,xhr.total);
+		xhr.ontimeout = function(e) {
+			error(e.loaded,e.total);
 		};
-		xhr.onprogress = function() {
-			progress(xhr.loaded, xhr.total);
+		xhr.onprogress = function(e) {
+			progress(e.loaded, e.total);
 		};
 		xhr.onload = function() {
 			if (this.status == 200)
