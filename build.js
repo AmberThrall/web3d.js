@@ -8,6 +8,7 @@ var files = [
 	"src/graphics/program.js",
 	"src/graphics/geometry.js",
 	"src/scene/camera.js",
+	"src/scene/cube.js"
 ];
 
 var source = "";
