@@ -6,7 +6,9 @@ web3d.RenderTypes = {
 
 web3d.Geometry = function () {
 	this.verticesBuffer = web3d.gl.createBuffer();
+	this.colorsBuffer = web3d.gl.createBuffer();
 
+	this.material = new web3d.BasicMaterial(new web3d.Color(1,1,1,1));
 	this.position = [0,0,0];
 	this.rotation = [0,0,0];
 	this.scale = [1,1,1];
@@ -15,6 +17,7 @@ web3d.Geometry = function () {
 web3d.Geometry.prototype = {
 	constructor: web3d.Geometry,
 
+	material: null,
 	vertices: [],
 	colors: [],
 	uvs: [],
@@ -30,11 +33,15 @@ web3d.Geometry.prototype = {
 			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.verticesBuffer);
 			web3d.gl.bufferData(web3d.gl.ARRAY_BUFFER, new Float32Array(this.vertices), web3d.gl.STATIC_DRAW);
 		}
+		if (this.colors.length > 0) {
+			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.colorsBuffer);
+			web3d.gl.bufferData(web3d.gl.ARRAY_BUFFER, new Float32Array(this.colors), web3d.gl.STATIC_DRAW);
+		}
 
 		this.renderType = renderType;
 	},
 
-	render: function(camera, program) {
+	render: function(camera) {
 		// Bind camera matrices and model matrix to program
 		var modelMat = mat4.create();
 		mat4.identity(modelMat);
@@ -44,10 +51,10 @@ web3d.Geometry.prototype = {
 		mat4.rotate(modelMat, modelMat, web3d.Math.degToRad(this.rotation[2]), [0,0,1]);
 		mat4.scale(modelMat, modelMat, this.scale);
 
-		program.bind();
-		program.uniformMatrix4(program.locations[web3d.ProgramLocations.VIEW_MATRIX], false, camera.getViewMatrix());
-		program.uniformMatrix4(program.locations[web3d.ProgramLocations.PERSPECTIVE_MATRIX], false, camera.getPerspectiveMatrix());
-		program.uniformMatrix4(program.locations[web3d.ProgramLocations.MODEL_MATRIX], false, modelMat);
+		this.material.bind();
+		program.uniformMatrix4(this.material.program.locations[web3d.ProgramLocations.VIEW_MATRIX], false, camera.getViewMatrix());
+		program.uniformMatrix4(this.material.program.locations[web3d.ProgramLocations.PERSPECTIVE_MATRIX], false, camera.getPerspectiveMatrix());
+		program.uniformMatrix4(this.material.program.locations[web3d.ProgramLocations.MODEL_MATRIX], false, modelMat);
 
 		// Update vertex attributes.
 		var pos0 = program.locations[web3d.ProgramLocations.POSITION0];
@@ -56,6 +63,13 @@ web3d.Geometry.prototype = {
 			web3d.gl.vertexAttribPointer(pos0, 3, web3d.gl.FLOAT, false, 0, 0);
 			web3d.gl.enableVertexAttribArray(pos0);
 			web3d.glCheck("Failed to set geometry's position attribute.");
+		}
+		var color0 = program.locations[web3d.ProgramLocations.COLOR0];
+		if (this.colors.length > 0 && color0 != null) {
+			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.colorsBuffer);
+			web3d.gl.vertexAttribPointer(color0, 4, web3d.gl.FLOAT, false, 0, 0);
+			web3d.gl.enableVertexAttribArray(color0);
+			web3d.glCheck("Failed to set geometry's color attribute.");
 		}
 
 		// Lookup rendertype:
@@ -87,6 +101,6 @@ web3d.Geometry.prototype = {
 
 		// Unbind the program and buffers, we're done with them.
 		web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, null);
-		program.unbind();
+		this.material.unbind();
 	}
 };

@@ -36,7 +36,18 @@ web3d.ProgramLocations = {
 	TEXTURE6: 33,
 	TEXTURE7: 34,
 	TEXTURE8: 35,
-	TEXTURE9: 36
+	TEXTURE9: 36,
+
+	CUSTOM0: 38,
+	CUSTOM1: 39,
+	CUSTOM2: 40,
+	CUSTOM3: 41,
+	CUSTOM4: 42,
+	CUSTOM5: 43,
+	CUSTOM6: 44,
+	CUSTOM7: 45,
+	CUSTOM8: 46,
+	CUSTOM9: 47
 }
 
 web3d.Program = function(vertex, fragment) {
@@ -47,7 +58,7 @@ web3d.Program = function(vertex, fragment) {
 	this.link();
 	this.validate();
 
-	for (var i = 0; i <= 37; ++i)
+	for (var i = 0; i <= 47; ++i)
 		this.locations[i] = null;
 };
 
@@ -120,6 +131,10 @@ web3d.Program.prototype = {
 	uniform4: function(location, value0, value1, value2, value3) {
 		web3d.gl.uniform4f(location, value0, value1, value2, value3);
 		web3d.glCheck("glUniform4f failed.");
+	},
+
+	uniformColor: function(location, color) {
+		this.uniform4(location, color.r, color.g, color.b, color.a);
 	},
 
 	uniformMatrix4: function(location, transpose, matrix) {

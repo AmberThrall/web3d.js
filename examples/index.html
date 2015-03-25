@@ -17,42 +17,19 @@
 				web3d.log("web3d.js Version: ", web3d.version());
 				web3d.clearColor(new web3d.Color(0x000000ff))
 
-				var vertexShader = new web3d.Shader(0, "	\
-						attribute vec3 aVertexPosition;		\
-						uniform mat4 uPMatrix;				\
-						uniform mat4 uVMatrix;				\
-						uniform mat4 uMMatrix;				\
-						void main(void) {					\
-							gl_Position = uPMatrix * uVMatrix * uMMatrix * vec4(aVertexPosition, 1.0);	\
-						}"
-					);
-				var fragmentShader = new web3d.Shader(1, "			\
-					 	precision mediump float;					\
-						void main(void) {							\
-							gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\
-						}"
-					);
-				program = new web3d.Program(vertexShader, fragmentShader);
-				program.bind();
-				program.mapAttribute(web3d.ProgramLocations.POSITION0, "aVertexPosition");
-				program.mapUniform(web3d.ProgramLocations.PERSPECTIVE_MATRIX, "uPMatrix");
-				program.mapUniform(web3d.ProgramLocations.VIEW_MATRIX, "uVMatrix");
-				program.mapUniform(web3d.ProgramLocations.MODEL_MATRIX, "uMMatrix");
-
 				cube = web3d.Geometry.cube(0.5,0.5,1);
+				cube.material.color = new web3d.Color(0xff00ffff);
 
 				camera = new web3d.Camera();
 				camera.lookAt([1.5,1.5,1.5], [0,0,0], [0,1,0]);
 				camera.perspective(45, canvas.width / canvas.height, 0.1, 100);
 			}
 
-			var t = 0, r = 0;
+			var t = 0;
 			function render() {
-				var s = Math.sin(t+=0.01)*0.25 + 1;
-				cube.scale = [s,s,s];
-				cube.rotation = [90,0,r+=0.1];
+				cube.rotation = [90,0,t+=0.1];
 
-				cube.render(camera, program);
+				cube.render(camera);
 			}
 		</script>
 	</head>

@@ -8,7 +8,9 @@ var files = [
 	"src/graphics/program.js",
 	"src/graphics/geometry.js",
 	"src/scene/camera.js",
-	"src/scene/cube.js"
+	"src/scene/cube.js",
+	"src/scene/material.js",
+	"src/scene/basicMaterial.js"
 ];
 
 var source = "";

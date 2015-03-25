@@ -226,7 +226,18 @@ web3d.ProgramLocations = {
 	TEXTURE6: 33,
 	TEXTURE7: 34,
 	TEXTURE8: 35,
-	TEXTURE9: 36
+	TEXTURE9: 36,
+
+	CUSTOM0: 38,
+	CUSTOM1: 39,
+	CUSTOM2: 40,
+	CUSTOM3: 41,
+	CUSTOM4: 42,
+	CUSTOM5: 43,
+	CUSTOM6: 44,
+	CUSTOM7: 45,
+	CUSTOM8: 46,
+	CUSTOM9: 47
 }
 
 web3d.Program = function(vertex, fragment) {
@@ -237,7 +248,7 @@ web3d.Program = function(vertex, fragment) {
 	this.link();
 	this.validate();
 
-	for (var i = 0; i <= 37; ++i)
+	for (var i = 0; i <= 47; ++i)
 		this.locations[i] = null;
 };
 
@@ -312,6 +323,10 @@ web3d.Program.prototype = {
 		web3d.glCheck("glUniform4f failed.");
 	},
 
+	uniformColor: function(location, color) {
+		this.uniform4(location, color.r, color.g, color.b, color.a);
+	},
+
 	uniformMatrix4: function(location, transpose, matrix) {
 		web3d.gl.uniformMatrix4fv(location, false, matrix);
 		web3d.glCheck("glUniformMatrix4fv failed.");
@@ -325,7 +340,9 @@ web3d.RenderTypes = {
 
 web3d.Geometry = function () {
 	this.verticesBuffer = web3d.gl.createBuffer();
+	this.colorsBuffer = web3d.gl.createBuffer();
 
+	this.material = new web3d.BasicMaterial(new web3d.Color(1,1,1,1));
 	this.position = [0,0,0];
 	this.rotation = [0,0,0];
 	this.scale = [1,1,1];
@@ -334,6 +351,7 @@ web3d.Geometry = function () {
 web3d.Geometry.prototype = {
 	constructor: web3d.Geometry,
 
+	material: null,
 	vertices: [],
 	colors: [],
 	uvs: [],
@@ -349,11 +367,15 @@ web3d.Geometry.prototype = {
 			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.verticesBuffer);
 			web3d.gl.bufferData(web3d.gl.ARRAY_BUFFER, new Float32Array(this.vertices), web3d.gl.STATIC_DRAW);
 		}
+		if (this.colors.length > 0) {
+			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.colorsBuffer);
+			web3d.gl.bufferData(web3d.gl.ARRAY_BUFFER, new Float32Array(this.colors), web3d.gl.STATIC_DRAW);
+		}
 
 		this.renderType = renderType;
 	},
 
-	render: function(camera, program) {
+	render: function(camera) {
 		// Bind camera matrices and model matrix to program
 		var modelMat = mat4.create();
 		mat4.identity(modelMat);
@@ -363,10 +385,10 @@ web3d.Geometry.prototype = {
 		mat4.rotate(modelMat, modelMat, web3d.Math.degToRad(this.rotation[2]), [0,0,1]);
 		mat4.scale(modelMat, modelMat, this.scale);
 
-		program.bind();
-		program.uniformMatrix4(program.locations[web3d.ProgramLocations.VIEW_MATRIX], false, camera.getViewMatrix());
-		program.uniformMatrix4(program.locations[web3d.ProgramLocations.PERSPECTIVE_MATRIX], false, camera.getPerspectiveMatrix());
-		program.uniformMatrix4(program.locations[web3d.ProgramLocations.MODEL_MATRIX], false, modelMat);
+		this.material.bind();
+		program.uniformMatrix4(this.material.program.locations[web3d.ProgramLocations.VIEW_MATRIX], false, camera.getViewMatrix());
+		program.uniformMatrix4(this.material.program.locations[web3d.ProgramLocations.PERSPECTIVE_MATRIX], false, camera.getPerspectiveMatrix());
+		program.uniformMatrix4(this.material.program.locations[web3d.ProgramLocations.MODEL_MATRIX], false, modelMat);
 
 		// Update vertex attributes.
 		var pos0 = program.locations[web3d.ProgramLocations.POSITION0];
@@ -375,6 +397,13 @@ web3d.Geometry.prototype = {
 			web3d.gl.vertexAttribPointer(pos0, 3, web3d.gl.FLOAT, false, 0, 0);
 			web3d.gl.enableVertexAttribArray(pos0);
 			web3d.glCheck("Failed to set geometry's position attribute.");
+		}
+		var color0 = program.locations[web3d.ProgramLocations.COLOR0];
+		if (this.colors.length > 0 && color0 != null) {
+			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.colorsBuffer);
+			web3d.gl.vertexAttribPointer(color0, 4, web3d.gl.FLOAT, false, 0, 0);
+			web3d.gl.enableVertexAttribArray(color0);
+			web3d.glCheck("Failed to set geometry's color attribute.");
 		}
 
 		// Lookup rendertype:
@@ -406,7 +435,7 @@ web3d.Geometry.prototype = {
 
 		// Unbind the program and buffers, we're done with them.
 		web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, null);
-		program.unbind();
+		this.material.unbind();
 	}
 };
 web3d.Camera = function () {
@@ -505,6 +534,73 @@ web3d.Geometry.cube = function(x, y, z) {
 	    -x,  y,  z,
 	    -x,  y, -z
     ];
+
+    geo.colors.length = (geo.vertices.length/3)*4
+	for (var i = 0; i < geo.colors.length; ++i)
+		geo.colors[i] = 1;
 	geo.update(web3d.RenderTypes.TRIANGLES);
 	return geo;
+}
+web3d.Material = function () {
+
+};
+
+web3d.Material.prototype = {
+	constructor: web3d.Material,
+	program: null,
+
+	setProgram: function(program) {
+		this.program = program;
+	},
+
+	bind: function() {
+		this.program.bind();
+	},
+
+	unbind: function() {
+		this.program.unbind();
+	}
+};
+web3d.BasicMaterial = function (color) {
+	web3d.Material.call(this);
+
+	var vertexShader = new web3d.Shader(0, "	\
+			attribute vec3 aVertexPosition;		\
+			attribute vec4 aVertexColor;		\
+			uniform mat4 uPMatrix;				\
+			uniform mat4 uVMatrix;				\
+			uniform mat4 uMMatrix;				\
+			uniform vec4 uColor;				\
+			varying vec4 vColor;				\
+			void main(void) {					\
+				vColor = mix(aVertexColor,uColor,0.5);			\
+				gl_Position = uPMatrix * uVMatrix * uMMatrix * vec4(aVertexPosition, 1.0);	\
+			}"
+		);
+	var fragmentShader = new web3d.Shader(1, "			\
+		 	precision mediump float;					\
+		 	varying vec4 vColor;						\
+			void main(void) {							\
+				gl_FragColor = vColor;					\
+			}"
+		);
+
+	program = new web3d.Program(vertexShader, fragmentShader);
+	program.mapAttribute(web3d.ProgramLocations.POSITION0, "aVertexPosition");
+	program.mapAttribute(web3d.ProgramLocations.COLOR0, "aVertexColor");
+	program.mapUniform(web3d.ProgramLocations.CUSTOM0, "uColor")
+	program.mapUniform(web3d.ProgramLocations.PERSPECTIVE_MATRIX, "uPMatrix");
+	program.mapUniform(web3d.ProgramLocations.VIEW_MATRIX, "uVMatrix");
+	program.mapUniform(web3d.ProgramLocations.MODEL_MATRIX, "uMMatrix");
+
+	this.setProgram(program);
+	this.color = color;
+};
+
+web3d.BasicMaterial.prototype = Object.create(web3d.Material.prototype);
+web3d.BasicMaterial.prototype.constructor = web3d.BasicMaterial;
+web3d.BasicMaterial.prototype.bind = function() {
+	this.program.bind();
+	
+	this.program.uniformColor(this.program.locations[web3d.ProgramLocations.CUSTOM0], this.color);
 }
