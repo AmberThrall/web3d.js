@@ -24,9 +24,9 @@
 				camera.perspective(45, canvas.width / canvas.height, 0.1, 100);
 
 				var loader = new web3d.TextureLoader();
-				loader.load("textures/metal.jpg",
+				loader.load("textures/earth.jpg",
 					function(texture) {
-						web3d.log("Loaded texture 'textures/metal.jpg'");
+						web3d.log("Loaded texture 'textures/earth.jpg'");
 						sphere.material = new web3d.TexturedMaterial(texture);
 					},
 					function(bytes,total) {
