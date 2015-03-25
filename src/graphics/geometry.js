@@ -1,10 +1,15 @@
 web3d.RenderTypes = {
 	TRIANGLES: 0,
-	TRIANGLE_STRIP: 1
+	TRIANGLE_STRIP: 1,
+	TRIANGLE_FAN: 2
 };
 
 web3d.Geometry = function () {
 	this.verticesBuffer = web3d.gl.createBuffer();
+
+	this.position = [0,0,0];
+	this.rotation = [0,0,0];
+	this.scale = [1,1,1];
 };
 
 web3d.Geometry.prototype = {
@@ -16,6 +21,9 @@ web3d.Geometry.prototype = {
 	normals: [],
 	indices: [],
 	renderType: 0,
+	position: null,
+	rotation: null,
+	scale: null,
 
 	update: function(renderType) {
 		if (this.vertices.length > 0) {
@@ -26,7 +34,21 @@ web3d.Geometry.prototype = {
 		this.renderType = renderType;
 	},
 
-	render: function(program) {
+	render: function(camera, program) {
+		// Bind camera matrices and model matrix to program
+		var modelMat = mat4.create();
+		mat4.identity(modelMat);
+		mat4.translate(modelMat, modelMat, [0,0,0]);
+		mat4.rotate(modelMat, modelMat, web3d.Math.degToRad(this.rotation[0]), [1,0,0]);
+		mat4.rotate(modelMat, modelMat, web3d.Math.degToRad(this.rotation[1]), [0,1,0]);
+		mat4.rotate(modelMat, modelMat, web3d.Math.degToRad(this.rotation[2]), [0,0,1]);
+		mat4.scale(modelMat, modelMat, this.scale);
+
+		program.bind();
+		program.uniformMatrix4(program.locations[web3d.ProgramLocations.VIEW_MATRIX], false, camera.getViewMatrix());
+		program.uniformMatrix4(program.locations[web3d.ProgramLocations.PERSPECTIVE_MATRIX], false, camera.getPerspectiveMatrix());
+		program.uniformMatrix4(program.locations[web3d.ProgramLocations.MODEL_MATRIX], false, modelMat);
+
 		// Update vertex attributes.
 		var pos0 = program.locations[web3d.ProgramLocations.POSITION0];
 		if (this.vertices.length > 0 && pos0 != null) {
@@ -36,9 +58,8 @@ web3d.Geometry.prototype = {
 			web3d.glCheck("Failed to set geometry's position attribute.");
 		}
 
-		//TODO: Remaining
-
 		// Lookup rendertype:
+		//TODO: Remaining
 		var type = web3d.gl.TRIANGLES;
 		switch (this.renderType) {
 			case web3d.RenderTypes.TRIANGLES:
@@ -46,6 +67,9 @@ web3d.Geometry.prototype = {
 				break;
 			case web3d.RenderTypes.TRIANGLE_STRIP:
 				type = web3d.gl.TRIANGLE_STRIP;
+				break;
+			case web3d.RenderTypes.TRIANGLE_FAN:
+				type = web3d.gl.TRIANGLE_FAN;
 				break;
 			default:
 				web3d.log("Unknown render type: '" + this.renderType + "'.");
@@ -60,5 +84,9 @@ web3d.Geometry.prototype = {
 			web3d.gl.drawArrays(type, 0, this.vertices.length / 3);
 			web3d.glCheck("Failed to draw geometry's arrays.");
 		}
+
+		// Unbind the program and buffers, we're done with them.
+		web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, null);
+		program.unbind();
 	}
 };

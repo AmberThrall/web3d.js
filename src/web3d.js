@@ -29,9 +29,10 @@ var web3d = {
 			this.error("Unable to initialize WebGL. Your browser may not support it.");
 			this.gl = null;
 		}	
-		//gl.getParameter
+		
 		this.log("OpenGL Renderer: ", this.gl.getParameter(this.gl.RENDERER));
 		this.log("OpenGL Version: ", this.gl.getParameter(this.gl.VERSION));
+		this.log("Checking for multisampling support.");
 
 		this.log("Initializing the game.");
 		this.clearColor(new web3d.Color(0,0,0,1));
@@ -44,11 +45,9 @@ var web3d = {
 	},
 
 	mainLoop: function() {
-		try {
-			this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-			this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-			this.update();
-		} catch(e) {}
+		web3d.gl.viewport(0, 0, web3d.canvas.width, web3d.canvas.height);
+		web3d.gl.clear(web3d.gl.COLOR_BUFFER_BIT | web3d.gl.DEPTH_BUFFER_BIT);
+		web3d.update();
 
 		requestAnimationFrame(web3d.mainLoop);
 	},

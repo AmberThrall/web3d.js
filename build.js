@@ -1,17 +1,13 @@
 var fs = require('fs');
 var files = [
+	"deps/gl-matrix-min.js",
 	"src/web3d.js", 
 	"src/math/math.js",
-	"src/math/vector2.js",
-	"src/math/vector3.js",
-	"src/math/vector4.js",
-	"src/math/matrix2.js",
-	"src/math/matrix3.js",
-	"src/math/matrix4.js",
 	"src/graphics/color.js",
 	"src/graphics/shader.js",
 	"src/graphics/program.js",
 	"src/graphics/geometry.js",
+	"src/scene/camera.js",
 ];
 
 var source = "";

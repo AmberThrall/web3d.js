@@ -24,7 +24,8 @@ web3d.ProgramLocations = {
 	COLOR4: 24,
 
 	PROJECTION_MATRIX: 25,
-	MODEL_VIEW_MATRIX: 26,
+	VIEW_MATRIX: 26,
+	MODEL_MATRIX: 37,
 
 	TEXTURE0: 27,
 	TEXTURE1: 28,
@@ -46,7 +47,7 @@ web3d.Program = function(vertex, fragment) {
 	this.link();
 	this.validate();
 
-	for (var i = 0; i <= 36; ++i)
+	for (var i = 0; i <= 37; ++i)
 		this.locations[i] = null;
 };
 
@@ -122,7 +123,7 @@ web3d.Program.prototype = {
 	},
 
 	uniformMatrix4: function(location, transpose, matrix) {
-		web3d.gl.uniformMatrix4fv(location, transpose, matrix.m);
+		web3d.gl.uniformMatrix4fv(location, false, matrix);
 		web3d.glCheck("glUniformMatrix4fv failed.");
 	}
 }
