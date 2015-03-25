@@ -91,6 +91,7 @@ web3d.Geometry.cube = function(x, y, z) {
 		0.0, 0.0,
 		0.0, 1.0
 	];
+	geo.verticesCount = 36;
 	geo.update(web3d.RenderTypes.TRIANGLES);
 	return geo;
 }
