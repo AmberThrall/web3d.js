@@ -6,14 +6,6 @@ web3d.Camera = function () {
 web3d.Camera.prototype = {
 	constructor: web3d.Camera,
 
-	eye: null,
-	at: null,
-	up: null,
-	fov: 45,
-	aspect: 1,
-	near: 0.1,
-	far: 1000,
-
 	copy: function(b) {
 		this.eye = b.eye;
 		this.at = b.at;

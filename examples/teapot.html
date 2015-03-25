@@ -26,7 +26,7 @@
 					function(geo) {
 						web3d.log("Loaded model 'models/teapot.json'");
 						teapot = geo;
-						
+
 						// Now load in the texture.
 						var loader = new web3d.TextureLoader();
 						loader.load("textures/metal.jpg",
@@ -57,7 +57,7 @@
 				canvas.height = window.innerHeight;
 
 				if (teapot != null) {
-					teapot.rotation = [90,0,t+=0.1];
+					teapot.rotation = [0,t+=0.1,0];
 					teapot.render(camera);
 				}
 			}

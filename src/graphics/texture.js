@@ -5,9 +5,7 @@ web3d.Texture = function (image) {
 
 web3d.Texture.prototype = {
 	constructor: web3d.Texture,
-
-	texture: null,
-
+	
 	set: function(image) {
 		this.bind();
 		web3d.gl.texImage2D(web3d.gl.TEXTURE_2D, 0, web3d.gl.RGBA, web3d.gl.RGBA, web3d.gl.UNSIGNED_BYTE, image);

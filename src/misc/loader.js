@@ -31,7 +31,6 @@ web3d.TextureLoader = function() {
 
 web3d.TextureLoader.prototype = {
 	constructor: web3d.TextureLoader,
-	loader: null,
 
 	load: function(url, complete, progress, error) {
 		this.loader.load(url, function(xhr) { 
@@ -60,7 +59,6 @@ web3d.ModelLoader = function() {
 
 web3d.ModelLoader.prototype = {
 	constructor: web3d.ModelLoader,
-	loader: null,
 
 	load: function(url, complete, progress, error) {
 		this.loader.load(url, function(xhr) { 

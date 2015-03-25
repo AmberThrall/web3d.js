@@ -58,15 +58,15 @@ web3d.Program = function(vertex, fragment) {
 	this.link();
 	this.validate();
 
-	for (var i = 0; i <= 47; ++i)
+	this.locations = [];
+	this.locations.length = 48;
+	for (var i = 0; i < this.locations.length; ++i)
 		this.locations[i] = null;
 };
 
 web3d.Program.prototype = {
 	constructor: web3d.Program,
 
-	program: null, 
-	locations: [],
 	bind: function() {
 		web3d.gl.useProgram(this.program);
 		web3d.glCheck("Failed to bind program.");

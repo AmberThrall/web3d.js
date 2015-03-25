@@ -9,7 +9,7 @@
 		<script type="text/javascript" src="../build/web3d.js"></script>
 		<script type="text/javascript">
 			var canvas;
-			var sphere;
+			var sphere, sphere2;
 			var program;
 			var camera;
 
@@ -17,17 +17,33 @@
 				web3d.log("web3d.js Version: ", web3d.version());
 				web3d.clearColor(new web3d.Color(0x000000ff))
 
-				sphere = web3d.Geometry.sphere(1, 12, 24);
+				sphere = web3d.Geometry.sphere(10, 12, 24);
+				sphere2 = web3d.Geometry.sphere(2, 12, 24);
+
+				sphere.position[0] = 0;
+				
 
 				camera = new web3d.Camera();
-				camera.lookAt([1.5,1.5,1.5], [0,0,0], [0,1,0]);
-				camera.perspective(45, canvas.width / canvas.height, 0.1, 100);
+				camera.lookAt([40,40,40], [0,0,0], [0,1,0]);
+				camera.perspective(45, canvas.width / canvas.height, 0.1, 1000);
 
 				var loader = new web3d.TextureLoader();
 				loader.load("textures/earth.jpg",
 					function(texture) {
 						web3d.log("Loaded texture 'textures/earth.jpg'");
 						sphere.material = new web3d.TexturedMaterial(texture);
+					},
+					function(bytes,total) {
+						web3d.log((bytes / total * 100) + "% loaded");
+					},
+					function(bytes,total) {
+						web3d.log("Failed to load texture.");
+					}
+				);
+				loader.load("textures/moon.jpg",
+					function(texture) {
+						web3d.log("Loaded texture 'textures/moon.jpg'");
+						sphere2.material = new web3d.TexturedMaterial(texture);
 					},
 					function(bytes,total) {
 						web3d.log((bytes / total * 100) + "% loaded");
@@ -44,9 +60,12 @@
 				canvas.width = window.innerWidth;
 				canvas.height = window.innerHeight;
 				
-				sphere.rotation = [90,0,t+=0.1];
+				sphere2.position[0] = 30 * Math.cos(t);
+				sphere2.position[2] = 30 * Math.sin(t);
+				sphere.rotation = [0,0,t+=0.01];
 
 				sphere.render(camera);
+				sphere2.render(camera);
 			}
 		</script>
 	</head>

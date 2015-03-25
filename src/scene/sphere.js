@@ -43,7 +43,7 @@ web3d.Geometry.sphere = function(radius, rings, sectors) {
 		}
 	}
 
-    geo.colors.length = (rings * sectors)*4
+    geo.colors.length = rings * sectors * 4
 	for (var i = 0; i < geo.colors.length; ++i)
 		geo.colors[i] = 1;
 

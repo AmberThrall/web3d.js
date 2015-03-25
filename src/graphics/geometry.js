@@ -1,8 +1,7 @@
 web3d.RenderTypes = {
 	TRIANGLES: 0,
 	TRIANGLE_STRIP: 1,
-	TRIANGLE_FAN: 2,
-	QUADS: 3
+	TRIANGLE_FAN: 2
 };
 
 web3d.Geometry = function () {
@@ -16,23 +15,19 @@ web3d.Geometry = function () {
 	this.position = [0,0,0];
 	this.rotation = [0,0,0];
 	this.scale = [1,1,1];
+
+	this.vertices = [];
+	this.colors =  [];
+	this.uvs = [];
+	this.normals = [];
+	this.indices = [];
+
+	this.verticesCount = 0;
+	this.renderType = web3d.RenderTypes.TRIANGLES;
 };
 
 web3d.Geometry.prototype = {
 	constructor: web3d.Geometry,
-
-	vertices: [],
-	colors: [],
-	uvs: [],
-	normals: [],
-	indices: [],
-
-	renderType: 0,
-	verticesCount: 0,
-	position: null,
-	rotation: null,
-	scale: null,
-	material: null,
 
 	update: function(renderType) {
 		if (this.colors != null && this.colors.length > 0) {
@@ -63,7 +58,7 @@ web3d.Geometry.prototype = {
 		// Bind camera matrices and model matrix to program
 		var modelMat = mat4.create();
 		mat4.identity(modelMat);
-		mat4.translate(modelMat, modelMat, [0,0,0]);
+		mat4.translate(modelMat, modelMat, this.position);
 		mat4.rotate(modelMat, modelMat, web3d.Math.degToRad(this.rotation[0]), [1,0,0]);
 		mat4.rotate(modelMat, modelMat, web3d.Math.degToRad(this.rotation[1]), [0,1,0]);
 		mat4.rotate(modelMat, modelMat, web3d.Math.degToRad(this.rotation[2]), [0,0,1]);
@@ -116,9 +111,6 @@ web3d.Geometry.prototype = {
 				break;
 			case web3d.RenderTypes.TRIANGLE_FAN:
 				type = web3d.gl.TRIANGLE_FAN;
-				break;
-			case web3d.RenderTypes.QUADS:
-				type = web3d.gl.QUADS;
 				break;
 			default:
 				type = web3d.gl.TRIANGLES;

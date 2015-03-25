@@ -1,7 +1,7 @@
 web3d.TexturedMaterial = function (texture) {
 	web3d.Material.call(this);
 
-	var vertexShader = new web3d.Shader(0, "	\
+	var vertexShader = new web3d.Shader(web3d.ShaderTypes.VERTEX, "	\
 			attribute vec3 aVertexPosition;		\
 			attribute vec2 aTextureCoord;		\
 			uniform mat4 uPMatrix;				\
@@ -14,7 +14,7 @@ web3d.TexturedMaterial = function (texture) {
 				gl_Position = uPMatrix * uVMatrix * uMMatrix * vec4(aVertexPosition, 1.0);	\
 			}"
 		);
-	var fragmentShader = new web3d.Shader(1, "			\
+	var fragmentShader = new web3d.Shader(web3d.ShaderTypes.FRAGMENT, "			\
 		 	precision mediump float;					\
 		 	uniform sampler2D uSampler;					\
 		 	varying vec2 vTextureCoord;					\
@@ -24,12 +24,14 @@ web3d.TexturedMaterial = function (texture) {
 		);
 
 	program = new web3d.Program(vertexShader, fragmentShader);
+	program.bind();
 	program.mapAttribute(web3d.ProgramLocations.POSITION0, "aVertexPosition");
 	program.mapAttribute(web3d.ProgramLocations.TEXCOORD0, "aTextureCoord");
 	program.mapUniform(web3d.ProgramLocations.TEXTURE0, "vTextureCoord")
 	program.mapUniform(web3d.ProgramLocations.PERSPECTIVE_MATRIX, "uPMatrix");
 	program.mapUniform(web3d.ProgramLocations.VIEW_MATRIX, "uVMatrix");
 	program.mapUniform(web3d.ProgramLocations.MODEL_MATRIX, "uMMatrix");
+	program.unbind();
 
 	this.setProgram(program);
 	this.texture = texture;
@@ -46,6 +48,6 @@ web3d.TexturedMaterial.prototype.bind = function() {
 }
 
 web3d.TexturedMaterial.prototype.unbind = function() {
-	this.program.unbind();
 	this.texture.unbind();
+	this.program.unbind();
 }

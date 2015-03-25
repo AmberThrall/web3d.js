@@ -10,6 +10,7 @@
 		<script type="text/javascript">
 			var canvas;
 			var cube;
+			var sphere;
 			var program;
 			var camera;
 
@@ -17,11 +18,15 @@
 				web3d.log("web3d.js Version: ", web3d.version());
 				web3d.clearColor(new web3d.Color(0x000000ff))
 
-				cube = web3d.Geometry.cube(0.5,0.5,1);
+				cube = new web3d.Geometry.cube(0.5,1,0.5);
 				cube.material.color = new web3d.Color(0xff00ffff);
 
+				sphere = new web3d.Geometry.sphere(0.25,12,24);
+				sphere.material.color = new web3d.Color(0x00ff00ff);
+				sphere.position[1] = 1.25;
+
 				camera = new web3d.Camera();
-				camera.lookAt([1.5,1.5,1.5], [0,0,0], [0,1,0]);
+				camera.lookAt([3,3,3], [0,0,0], [0,1,0]);
 				camera.perspective(45, canvas.width / canvas.height, 0.1, 100);
 			}
 
@@ -31,9 +36,11 @@
 				canvas.width = window.innerWidth;
 				canvas.height = window.innerHeight;
 
-				cube.rotation = [90,0,t+=0.1];
+				cube.rotation = [0,t,0];
+				sphere.rotation = [0,t+=0.1,0];
 
 				cube.render(camera);
+				sphere.render(camera);
 			}
 		</script>
 	</head>

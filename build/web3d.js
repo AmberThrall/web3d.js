@@ -244,11 +244,18 @@ web3d.Color.prototype = {
 		return this;
 	}
 };
+web3d.ShaderTypes = {
+	VERTEX: 0,
+	FRAGMENT: 1
+}
+
 web3d.Shader = function(type, source) {
-	if (type == 0)
+	if (type == web3d.ShaderTypes.VERTEX)
 		this.shader = web3d.gl.createShader(web3d.gl.VERTEX_SHADER);
-	else
+	else if (type == web3d.ShaderTypes.FRAGMENT)
 		this.shader = web3d.gl.createShader(web3d.gl.FRAGMENT_SHADER);
+	else
+		web3d.error("Unknown shader type.");
 	web3d.glCheck("Failed to create shader.");
 	this.set(source);
 	this.compile();
@@ -257,7 +264,6 @@ web3d.Shader = function(type, source) {
 web3d.Shader.prototype = {
 	constructor: web3d.Shader,
 
-	shader: null, 
 	set: function(source) {
 		web3d.gl.shaderSource(this.shader, source);
 		web3d.glCheck("Failed to set shader's source.");
@@ -333,15 +339,15 @@ web3d.Program = function(vertex, fragment) {
 	this.link();
 	this.validate();
 
-	for (var i = 0; i <= 47; ++i)
+	this.locations = [];
+	this.locations.length = 48;
+	for (var i = 0; i < this.locations.length; ++i)
 		this.locations[i] = null;
 };
 
 web3d.Program.prototype = {
 	constructor: web3d.Program,
 
-	program: null, 
-	locations: [],
 	bind: function() {
 		web3d.gl.useProgram(this.program);
 		web3d.glCheck("Failed to bind program.");
@@ -418,12 +424,11 @@ web3d.Program.prototype = {
 	}
 }
 web3d.Material = function () {
-
+	this.program = null;
 };
 
 web3d.Material.prototype = {
 	constructor: web3d.Material,
-	program: null,
 
 	setProgram: function(program) {
 		this.program = program;
@@ -440,8 +445,7 @@ web3d.Material.prototype = {
 web3d.RenderTypes = {
 	TRIANGLES: 0,
 	TRIANGLE_STRIP: 1,
-	TRIANGLE_FAN: 2,
-	QUADS: 3
+	TRIANGLE_FAN: 2
 };
 
 web3d.Geometry = function () {
@@ -455,23 +459,19 @@ web3d.Geometry = function () {
 	this.position = [0,0,0];
 	this.rotation = [0,0,0];
 	this.scale = [1,1,1];
+
+	this.vertices = [];
+	this.colors =  [];
+	this.uvs = [];
+	this.normals = [];
+	this.indices = [];
+
+	this.verticesCount = 0;
+	this.renderType = web3d.RenderTypes.TRIANGLES;
 };
 
 web3d.Geometry.prototype = {
 	constructor: web3d.Geometry,
-
-	vertices: [],
-	colors: [],
-	uvs: [],
-	normals: [],
-	indices: [],
-
-	renderType: 0,
-	verticesCount: 0,
-	position: null,
-	rotation: null,
-	scale: null,
-	material: null,
 
 	update: function(renderType) {
 		if (this.colors != null && this.colors.length > 0) {
@@ -502,7 +502,7 @@ web3d.Geometry.prototype = {
 		// Bind camera matrices and model matrix to program
 		var modelMat = mat4.create();
 		mat4.identity(modelMat);
-		mat4.translate(modelMat, modelMat, [0,0,0]);
+		mat4.translate(modelMat, modelMat, this.position);
 		mat4.rotate(modelMat, modelMat, web3d.Math.degToRad(this.rotation[0]), [1,0,0]);
 		mat4.rotate(modelMat, modelMat, web3d.Math.degToRad(this.rotation[1]), [0,1,0]);
 		mat4.rotate(modelMat, modelMat, web3d.Math.degToRad(this.rotation[2]), [0,0,1]);
@@ -555,9 +555,6 @@ web3d.Geometry.prototype = {
 				break;
 			case web3d.RenderTypes.TRIANGLE_FAN:
 				type = web3d.gl.TRIANGLE_FAN;
-				break;
-			case web3d.RenderTypes.QUADS:
-				type = web3d.gl.QUADS;
 				break;
 			default:
 				type = web3d.gl.TRIANGLES;
@@ -804,7 +801,7 @@ web3d.Geometry.sphere = function(radius, rings, sectors) {
 		}
 	}
 
-    geo.colors.length = (rings * sectors)*4
+    geo.colors.length = rings * sectors * 4
 	for (var i = 0; i < geo.colors.length; ++i)
 		geo.colors[i] = 1;
 
@@ -814,7 +811,7 @@ web3d.Geometry.sphere = function(radius, rings, sectors) {
 web3d.BasicMaterial = function (color) {
 	web3d.Material.call(this);
 
-	var vertexShader = new web3d.Shader(0, "	\
+	var vertexShader = new web3d.Shader(web3d.ShaderTypes.VERTEX, "	\
 			attribute vec3 aVertexPosition;		\
 			attribute vec4 aVertexColor;		\
 			uniform mat4 uPMatrix;				\
@@ -823,11 +820,11 @@ web3d.BasicMaterial = function (color) {
 			uniform vec4 uColor;				\
 			varying vec4 vColor;				\
 			void main(void) {					\
-				vColor = mix(aVertexColor,uColor,0.5);			\
+				vColor = aVertexColor * uColor;			\
 				gl_Position = uPMatrix * uVMatrix * uMMatrix * vec4(aVertexPosition, 1.0);	\
 			}"
 		);
-	var fragmentShader = new web3d.Shader(1, "			\
+	var fragmentShader = new web3d.Shader(web3d.ShaderTypes.FRAGMENT, "			\
 		 	precision mediump float;					\
 		 	varying vec4 vColor;						\
 			void main(void) {							\
@@ -836,12 +833,14 @@ web3d.BasicMaterial = function (color) {
 		);
 
 	program = new web3d.Program(vertexShader, fragmentShader);
+	program.bind();
 	program.mapAttribute(web3d.ProgramLocations.POSITION0, "aVertexPosition");
 	program.mapAttribute(web3d.ProgramLocations.COLOR0, "aVertexColor");
 	program.mapUniform(web3d.ProgramLocations.CUSTOM0, "uColor")
 	program.mapUniform(web3d.ProgramLocations.PERSPECTIVE_MATRIX, "uPMatrix");
 	program.mapUniform(web3d.ProgramLocations.VIEW_MATRIX, "uVMatrix");
 	program.mapUniform(web3d.ProgramLocations.MODEL_MATRIX, "uMMatrix");
+	program.unbind();
 
 	this.setProgram(program);
 	this.color = color;
@@ -851,13 +850,13 @@ web3d.BasicMaterial.prototype = Object.create(web3d.Material.prototype);
 web3d.BasicMaterial.prototype.constructor = web3d.BasicMaterial;
 web3d.BasicMaterial.prototype.bind = function() {
 	this.program.bind();
-	
+
 	this.program.uniformColor(this.program.locations[web3d.ProgramLocations.CUSTOM0], this.color);
 }
 web3d.TexturedMaterial = function (texture) {
 	web3d.Material.call(this);
 
-	var vertexShader = new web3d.Shader(0, "	\
+	var vertexShader = new web3d.Shader(web3d.ShaderTypes.VERTEX, "	\
 			attribute vec3 aVertexPosition;		\
 			attribute vec2 aTextureCoord;		\
 			uniform mat4 uPMatrix;				\
@@ -870,7 +869,7 @@ web3d.TexturedMaterial = function (texture) {
 				gl_Position = uPMatrix * uVMatrix * uMMatrix * vec4(aVertexPosition, 1.0);	\
 			}"
 		);
-	var fragmentShader = new web3d.Shader(1, "			\
+	var fragmentShader = new web3d.Shader(web3d.ShaderTypes.FRAGMENT, "			\
 		 	precision mediump float;					\
 		 	uniform sampler2D uSampler;					\
 		 	varying vec2 vTextureCoord;					\
@@ -880,12 +879,14 @@ web3d.TexturedMaterial = function (texture) {
 		);
 
 	program = new web3d.Program(vertexShader, fragmentShader);
+	program.bind();
 	program.mapAttribute(web3d.ProgramLocations.POSITION0, "aVertexPosition");
 	program.mapAttribute(web3d.ProgramLocations.TEXCOORD0, "aTextureCoord");
 	program.mapUniform(web3d.ProgramLocations.TEXTURE0, "vTextureCoord")
 	program.mapUniform(web3d.ProgramLocations.PERSPECTIVE_MATRIX, "uPMatrix");
 	program.mapUniform(web3d.ProgramLocations.VIEW_MATRIX, "uVMatrix");
 	program.mapUniform(web3d.ProgramLocations.MODEL_MATRIX, "uMMatrix");
+	program.unbind();
 
 	this.setProgram(program);
 	this.texture = texture;
@@ -902,6 +903,6 @@ web3d.TexturedMaterial.prototype.bind = function() {
 }
 
 web3d.TexturedMaterial.prototype.unbind = function() {
-	this.program.unbind();
 	this.texture.unbind();
+	this.program.unbind();
 }
