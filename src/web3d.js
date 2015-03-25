@@ -45,9 +45,9 @@ var web3d = {
 
 	mainLoop: function() {
 		try {
-			this.update();
 			this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 			this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+			this.update();
 		} catch(e) {}
 
 		requestAnimationFrame(web3d.mainLoop);

@@ -11,6 +11,7 @@ var files = [
 	"src/graphics/color.js",
 	"src/graphics/shader.js",
 	"src/graphics/program.js",
+	"src/graphics/geometry.js",
 ];
 
 var source = "";

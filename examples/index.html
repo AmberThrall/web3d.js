@@ -8,6 +8,9 @@
 
 		<script type="text/javascript" src="../build/web3d.js"></script>
 		<script type="text/javascript">
+			var cube;
+			var program;
+
 			function init() {
 				web3d.log("web3d.js Version: ", web3d.version());
 				web3d.clearColor(new web3d.Color(0x000000ff))
@@ -26,12 +29,31 @@
 							gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\
 						}"
 					);
-				var program = new web3d.Program(vertexShader, fragmentShader);
+				program = new web3d.Program(vertexShader, fragmentShader);
 				program.bind();
+				program.mapAttribute(web3d.ProgramLocations.POSITION0, "aVertexPosition");
+				program.mapUniform(web3d.ProgramLocations.PERSPECTIVE_MATRIX, "uPMatrix");
+				program.mapUniform(web3d.ProgramLocations.MODEL_VIEW_MATRIX, "uMVMatrix");
+
+				cube = new web3d.Geometry();
+				cube.vertices = [
+					0.0, 1.0, 0.0,
+					-1.0, -1.0, 0.0,
+					1.0, -1.0, 0.0
+				];
+				cube.update(web3d.RenderTypes.TRIANGLE_STRIP);
 			}
 
 			function update() {
-				
+				var pMatrix = new web3d.Matrix4();
+				var mvMatrix = new web3d.Matrix4();
+				//pMatrix.makePerspective(45, document.getElementById("canvas").width / document.getElementById("canvas").height, 0.1, 1000);
+				//mvMatrix.makeTranslation(new web3d.Vector3(-1.5, 0.0, -7.0));
+
+				program.uniformMatrix4(program.locations[web3d.ProgramLocations.PERSPECTIVE_MATRIX], false, pMatrix);
+				program.uniformMatrix4(program.locations[web3d.ProgramLocations.MODEL_VIEW_MATRIX], false, mvMatrix);
+
+				cube.render(program);
 			}
 		</script>
 	</head>

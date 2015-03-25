@@ -45,9 +45,9 @@ var web3d = {
 
 	mainLoop: function() {
 		try {
-			this.update();
 			this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 			this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+			this.update();
 		} catch(e) {}
 
 		requestAnimationFrame(web3d.mainLoop);
@@ -1113,6 +1113,46 @@ web3d.Shader.prototype = {
 		}
 	}
 }
+web3d.ProgramLocations = {
+	POSITION0: 0,
+	POSITION1: 1,
+	POSITION2: 2,
+	POSITION3: 3,
+	POSITION4: 4,
+
+	NORMAL0: 5,
+	NORMAL1: 6,
+	NORMAL2: 7,
+	NORMAL3: 8,
+	NORMAL4: 9,
+
+	TEXCOORD0: 10,
+	TEXCOORD1: 11,
+	TEXCOORD2: 12,
+	TEXCOORD3: 13,
+	TEXCOORD4: 14,
+
+	COLOR0: 20,
+	COLOR1: 21,
+	COLOR2: 22,
+	COLOR3: 23,
+	COLOR4: 24,
+
+	PROJECTION_MATRIX: 25,
+	MODEL_VIEW_MATRIX: 26,
+
+	TEXTURE0: 27,
+	TEXTURE1: 28,
+	TEXTURE2: 29,
+	TEXTURE3: 30,
+	TEXTURE4: 31,
+	TEXTURE5: 32,
+	TEXTURE6: 33,
+	TEXTURE7: 34,
+	TEXTURE8: 35,
+	TEXTURE9: 36
+}
+
 web3d.Program = function(vertex, fragment) {
 	this.program = web3d.gl.createProgram();
 	web3d.glCheck("Failed to create program.");
@@ -1120,19 +1160,23 @@ web3d.Program = function(vertex, fragment) {
 	this.attach(fragment);
 	this.link();
 	this.validate();
+
+	for (var i = 0; i <= 36; ++i)
+		this.locations[i] = null;
 };
 
 web3d.Program.prototype = {
 	constructor: web3d.Program,
 
 	program: null, 
+	locations: [],
 	bind: function() {
 		web3d.gl.useProgram(this.program);
 		web3d.glCheck("Failed to bind program.");
 	},
 
 	unbind: function() {
-		web3d.gl.useProgram(0);
+		web3d.gl.useProgram(null);
 		web3d.glCheck("Failed to unbind program.");
 	},
 
@@ -1154,5 +1198,110 @@ web3d.Program.prototype = {
 	validate: function() {
 		web3d.gl.validateProgram(this.program);
 		web3d.glCheck("Failed to validate program.");
+	},
+
+	mapAttribute: function(id, name) {
+		this.locations[id] = web3d.gl.getAttribLocation(this.program, name);
+		web3d.glCheck("Failed to get attribute location.");
+	},
+
+	mapUniform: function(id, name) {
+		this.locations[id] = this.getUniformLocation(name);
+		web3d.glCheck("Failed to get uniform location.");
+	},
+
+	getUniformLocation: function(name) {
+		var loc = web3d.gl.getUniformLocation(this.program, name);
+		web3d.glCheck("Failed to get uniform location.");
+		return loc;
+	},
+
+	uniform1: function(location, value0) {
+		web3d.gl.uniform1f(location, value0);
+		web3d.glCheck("glUniform1f failed.");
+	},
+
+	uniform2: function(location, value0, value1) {
+		web3d.gl.uniform2f(location, value0, value1);
+		web3d.glCheck("glUniform2f failed.");
+	},
+
+	uniform3: function(location, value0, value1, value2) {
+		web3d.gl.uniform3f(location, value0, value1, value2);
+		web3d.glCheck("glUniform3f failed.");
+	},
+
+	uniform4: function(location, value0, value1, value2, value3) {
+		web3d.gl.uniform4f(location, value0, value1, value2, value3);
+		web3d.glCheck("glUniform4f failed.");
+	},
+
+	uniformMatrix4: function(location, transpose, matrix) {
+		web3d.gl.uniformMatrix4fv(location, transpose, matrix.m);
+		web3d.glCheck("glUniformMatrix4fv failed.");
 	}
 }
+web3d.RenderTypes = {
+	TRIANGLES: 0,
+	TRIANGLE_STRIP: 1
+};
+
+web3d.Geometry = function () {
+	this.verticesBuffer = web3d.gl.createBuffer();
+};
+
+web3d.Geometry.prototype = {
+	constructor: web3d.Geometry,
+
+	vertices: [],
+	colors: [],
+	uvs: [],
+	normals: [],
+	indices: [],
+	renderType: 0,
+
+	update: function(renderType) {
+		if (this.vertices.length > 0) {
+			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.verticesBuffer);
+			web3d.gl.bufferData(web3d.gl.ARRAY_BUFFER, new Float32Array(this.vertices), web3d.gl.STATIC_DRAW);
+		}
+
+		this.renderType = renderType;
+	},
+
+	render: function(program) {
+		// Update vertex attributes.
+		var pos0 = program.locations[web3d.ProgramLocations.POSITION0];
+		if (this.vertices.length > 0 && pos0 != null) {
+			web3d.gl.bindBuffer(web3d.gl.ARRAY_BUFFER, this.verticesBuffer);
+			web3d.gl.vertexAttribPointer(pos0, 3, web3d.gl.FLOAT, false, 0, 0);
+			web3d.gl.enableVertexAttribArray(pos0);
+			web3d.glCheck("Failed to set geometry's position attribute.");
+		}
+
+		//TODO: Remaining
+
+		// Lookup rendertype:
+		var type = web3d.gl.TRIANGLES;
+		switch (this.renderType) {
+			case web3d.RenderTypes.TRIANGLES:
+				type = web3d.gl.TRIANGLES;
+				break;
+			case web3d.RenderTypes.TRIANGLE_STRIP:
+				type = web3d.gl.TRIANGLE_STRIP;
+				break;
+			default:
+				web3d.log("Unknown render type: '" + this.renderType + "'.");
+				break;
+		}
+
+		// Render
+		if (this.indices.length > 0) {
+
+		}
+		else {
+			web3d.gl.drawArrays(type, 0, this.vertices.length / 3);
+			web3d.glCheck("Failed to draw geometry's arrays.");
+		}
+	}
+};
